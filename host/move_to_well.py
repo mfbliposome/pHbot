@@ -52,7 +52,7 @@ def main(user_input):
     gcode_output = [
         "M17 ; enable motors",
         "G21 ; Set units to mm",
-        "G90 ; set current positioning",
+        "G90 ; set absolute positioning",
         "G00 Z130 ; Start at safe height\n"
     ]
 
