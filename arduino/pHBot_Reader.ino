@@ -7,12 +7,6 @@ float pHValue1 = 0.00;
 float pHValue2 = 0.00;
 float pHSlope = 0.000;
 float pHIntercept = 0.000;
-int pHCounter = 0;
-float pHChecker = 0.00;
-float pHFinal = 0.00;
-
-bool hostCodeSignal = true; //To be controlled by the host code.
-bool firstReset = false;
 
 #include <pHBot_Calibration.h>
 
@@ -25,30 +19,32 @@ void setup() {
   pHVolts2 = readVolts(pHProbe); //Measures the second pH value as milivolts.
   pHSlope = calculateSlope(pHValue2, pHValue1, pHVolts2, pHVolts1); //Calculates the slope using the two data points.
   pHIntercept = calculateIntercept(pHValue2, pHValue1, pHVolts2, pHVolts1, pHSlope); //Calculates the y-intercepts using the two data points and slope.
+  Serial.println("Calibration complete. The slope is " + String(pHSlope) + " and the intercept is " + String(pHIntercept));
 }
 
 void loop() {
-  if(hostCodeSignal == true) {
-    firstReset = true;
-    while(pHCounter < 10) {
-      pHVolts = Serial.read();
-      pHValue = pHVolts * pHSlope + pHIntercept;
-      if(pHValue > (pHChecker - 0.1) && pHValue < (pHChecker + 0.1)) {
-        pHCounter++;
+  if (Serial.available() > 0) {
+    String hostCommand = Serial.readStringUntil('\n');
+    hostCommand.trim();
+    if(hostCommand.equalsIgnoreCase("READ_PH")) {
+      int pHCounter = 0;
+      float pHChecker = 0.00;
+      float pHFinal = 0.00;
+      while(pHCounter < 10) {
+        pHVolts = analogRead(pHProbe);
+        pHValue = pHVolts * pHSlope + pHIntercept;
+        Serial.println("Currently reading" + String(pHValue));
+        if(pHValue > (pHChecker - 0.05) && pHValue < (pHChecker + 0.05)) {
+          pHCounter++;
+        }
+        else {
+          pHCounter = 0;
+        }
+        pHChecker = pHValue;
+        delay(500);
       }
-      else {
-        pHCounter = 0;
-      }
-      pHChecker = pHVolts;
-      delay(500);
+      pHFinal = pHValue;
+      Serial.println("pH measurement: " + String(pHFinal));
     }
-    pHFinal = pHVolts;
-    //Export Final Value
-  }
-  else if (hostCodeSignal == false && firstReset == true) {
-    firstReset = false;
-    pHCounter = 0;
-    pHChecker = 0.00;
-    pHFinal = 0.00;
   }
 }
