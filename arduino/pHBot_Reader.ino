@@ -33,7 +33,7 @@ void loop() {
 
 float whatValuepH (int bufferNumber) {
   int pHBuffer = 0; //Local variable used to hold the value of the input pH.
-  Serial.println("PH BUFFER " + String(bufferNumber) + ":");
+  Serial.println("PH_BUFFER_" + String(bufferNumber) + ":");
   while(pHBuffer == 0) {
     if(Serial.available() > 0) {
       pHBuffer = Serial.parseInt(); //Waits for a user to input the pH value, and will not continue until a non-trivial value is entered.
