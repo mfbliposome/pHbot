@@ -17,16 +17,16 @@ void setup() {
   pHVolts2 = readVolts(); //Measures the second pH value as milivolts.
   pHSlope = calculateSlope(pHValue2, pHValue1, pHVolts2, pHVolts1); //Calculates the slope using the two data points.
   pHIntercept = calculateIntercept(pHValue2, pHValue1, pHVolts2, pHVolts1, pHSlope); //Calculates the y-intercepts using the two data points and slope.
-  Serial.println("Calibration complete.");
+  Serial.println("Calibration complete."); //Lets the host code know that calibration is over
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    String hostCommand = Serial.readStringUntil('\n');
-    hostCommand.trim();
-    if(hostCommand.equalsIgnoreCase("READ_PH")) {
-      float pHFinal = stableReading(10, 0.05, 500, "pH");
-      Serial.println("pH: " + String(pHFinal));
+  if (Serial.available() > 0) { //Waits for the host code to write something to the arduino
+    String hostCommand = Serial.readStringUntil('\n'); //Saves the string up to the '\n' portion.
+    hostCommand.trim(); //Trims the string for clarity
+    if(hostCommand.equalsIgnoreCase("READ_PH")) { //Begins reading the pH if the message is "READ_PH"
+      float pHFinal = stableReading(10, 0.05, 500, "pH"); //Saves the stable pH value, which is found with the following consecutive measurements, tolerance, and time rate
+      Serial.println("pH: " + String(pHFinal)); //Prints the value back to the host code, to be saved into a csv. file
     }
   }
 }
@@ -43,8 +43,8 @@ float whatValuepH (int bufferNumber) {
 }
 
 int readVolts () {
-  float voltBuffer = stableReading(10, 2, 500, "");
-  return (int) voltBuffer;
+  float voltBuffer = stableReading(10, 2, 500, ""); //Saves the stable milivolt value, which is found with the following consecutive measurements, tolerance, and time rate
+  return (int) voltBuffer; //Returns the voltage as an integer
 }
 
 float calculateSlope (float y2, float y1, int x2, int x1) {
@@ -68,22 +68,22 @@ float calculateIntercept (float y2, float y1, int x2, int x1, float m) {
 }
 
 float stableReading(int count, float tolerance, int rate, String reading) {
-  int counter = 0;
-  float prev = 0.00;
-  while(counter < count) {
-    float cur = analogRead(pHProbe); //Assign the current value to currentVolt.
-    if(reading == "pH") {
-      cur = cur * pHSlope + pHIntercept;
+  int counter = 0; //Integer variable to count the number of consecutive readings
+  float prev = 0.00; //Decimal variable to hold the previous cycle's value
+  while(counter < count) { //Keeps looping until count consecutiv readings have been reached.
+    float cur = analogRead(pHProbe); //Reads the current milivolt value from the pH probe.
+    if(reading == "pH") { 
+      cur = cur * pHSlope + pHIntercept; //Converts the milivolt value into a pH value if we are reading for pH
     }
-    Serial.println("Currently reading" + String(cur));
+    Serial.println("Currently reading" + String(cur)); //Prints the value to let the user know
     if(cur > (prev - tolerance) &&  cur < (prev + tolerance)) {
-      counter++;
+      counter++; //Increments the counter if the value is within tolerance
     }
     else {
-      counter = 0;
+      counter = 0; //Resets the counter if we are not within tolerance
     }
-    prev = cur;
-    delay(rate);
+    prev = cur; //Saves the current value to the previous value
+    delay(rate); //Delays the program to for a time rate between measurements. Quickest run time = count * time rate
   }
-  return prev;
+  return prev; //Returns the last value of the iteration, since the nine ones before it were within tolerance
 }
